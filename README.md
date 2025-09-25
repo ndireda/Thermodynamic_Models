@@ -47,35 +47,6 @@ jupyter lab  # or: jupyter notebook
 
 ---
 
-## 🎨 Plot Style (consistent across all notebooks)
-
-All figures share a single, consistent style for easy side‑by‑side comparison:
-
-- **Font:** Consolas (fallbacks used if not available)
-- **Figure size:** 8 × 5 in
-- **Line width:** 2.0
-- **Grid:** major+minor; alpha 0.3
-- **DPI:** 150
-
-Paste this at the top of each notebook (or keep in a common `style.py`):
-
-```python
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-
-mpl.rcParams.update({
-    "font.family": "Consolas",
-    "figure.figsize": (8, 5),
-    "lines.linewidth": 2.0,
-    "axes.grid": True,
-    "grid.alpha": 0.3,
-    "axes.grid.which": "both",
-    "savefig.dpi": 150,
-})
-```
-
----
-
 ## 📚 Model Catalog (at a glance)
 
 > Replace any placeholders below with specifics if your notebooks print/annotate them.
