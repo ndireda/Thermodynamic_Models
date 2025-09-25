@@ -9,7 +9,7 @@ A compact collection of aerospace models—rockets, engines, and flame physics�
 ## 📦 Contents
 
 - Notebooks: `Script A.ipynb`, `Script B.ipynb`, `Script C.ipynb`, `Script D.ipynb`
-- Mechanisms: `Mechanism1.yaml`, `C7H16.yaml`
+- External Mechanisms: `Mechanism1.yaml`, `C7H16.yaml`
 - This README and a minimal `requirements.txt`
 
 Suggested structure:
@@ -19,7 +19,7 @@ Suggested structure:
 ├── Script B.ipynb
 ├── Script C.ipynb
 ├── Script D.ipynb
-├── Mechanism1.yaml
+├── Mechanism1.yaml (n-dodecane)
 ├── C7H16.yaml
 └── README.md
 ```
@@ -81,28 +81,48 @@ mpl.rcParams.update({
 > Replace any placeholders below with specifics if your notebooks print/annotate them.
 
 ### `Script A.ipynb`
-- **System:** _{YourCompany} {SystemName}_
+- **System:** Ariane 6 Rocket with Separation
 - **Dimensions:** 0D / 1D (choose as appropriate)
 - **Combustion:** yes / no
 - **Outputs:** list the variables, metrics, and plots the notebook produces
+<img width="885" height="435" alt="image" src="https://github.com/user-attachments/assets/083b488a-6d74-46c6-b134-311d4991bdad" />
+
 
 ### `Script B.ipynb`
-- **System:** _{YourCompany} {SystemName}_
+- **System:** Boeing 777-300ER Engine
 - **Dimensions:** 0D / 1D (choose as appropriate)
 - **Combustion:** yes / no
 - **Outputs:** list the variables, metrics, and plots the notebook produces
+<img width="900" height="559" alt="image" src="https://github.com/user-attachments/assets/d21ff469-4dc9-4136-99a3-e3a79639efa1" />
+
 
 ### `Script C.ipynb`
-- **System:** _{YourCompany} {SystemName}_
+- **System:** Falcon Heavy Boosters and Throttling
 - **Dimensions:** 0D / 1D (choose as appropriate)
 - **Combustion:** yes / no
 - **Outputs:** list the variables, metrics, and plots the notebook produces
+<img width="800" height="395" alt="image" src="https://github.com/user-attachments/assets/2f60f00e-2776-4b17-b8c5-331c6ca98a62" />
+<img width="900" height="378" alt="image" src="https://github.com/user-attachments/assets/0434de96-f2e6-43b2-867f-b42342e8befc" />
+<img width="900" height="444" alt="image" src="https://github.com/user-attachments/assets/ecfed296-c4fd-452a-b05f-e4fe01884b3c" />
 
 ### `Script D.ipynb`
-- **System:** _{YourCompany} {SystemName}_
+- **System:** Optimizing Pressure Ratio
 - **Dimensions:** 0D / 1D (choose as appropriate)
 - **Combustion:** yes / no
 - **Outputs:** list the variables, metrics, and plots the notebook produces
+**Ideal cycle + Cantera combustor**
+
+| Metric                       | Value                 |
+|-----------------------------|-----------------------|
+| Optimization finished in    | 0.16 s                |
+| Iterations                  | 10                    |
+| Best overall pressure ratio | 14.76                 |
+| Specific thrust *F*<sub>s</sub> | 1074.2 N·s/`kg_air`   |
+| TSFC                        | 0.00002 kg/N/s        |
+| Equivalence ratio φ         | 0.376                 |
+| Fuel mass flow              | 0.022 kg/s            |
+| Mass flow (compressor)      | 54.042 kg/s           |
+
 
 ---
 
@@ -118,12 +138,6 @@ mpl.rcParams.update({
 
 - Python 3.11
 - `cantera`, `netCDF4`, `cftime`, `ruamel.yaml`, `matplotlib`, `jupyter`
-
----
-
-## 📄 License
-
-Add your preferred license (e.g., MIT, BSD-3-Clause).
 
 ---
 
