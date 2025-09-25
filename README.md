@@ -1,6 +1,6 @@
 # Aerospace System Models
 
-A compact collection of aerospace models rockets, engines, and flame physics; implemented as reproducible Jupyter notebooks with **uniform, publication-ready plots** (Consolas font, consistent sizing). This repo is ideal for students and practitioners who want clear, minimal models they can run and extend.
+A compact collection of aerospace models rockets, engines, and flame physics; implemented as reproducible Jupyter notebooks with **plots**. This repo is ideal for students and practitioners who want clear, minimal models they can run and extend.
 
 > **Scope cutoff:** Analyses summarized here reflect work available as of **2025-09-24**.
 
