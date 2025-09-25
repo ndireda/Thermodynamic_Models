@@ -83,24 +83,24 @@ mpl.rcParams.update({
 ### `Script A.ipynb`
 - **System:** Ariane 6 Rocket with Separation
 - **Dimensions:** 0D 
-- **Combustion:** yes 
-- **Outputs:** list the variables, metrics, and plots the notebook produces
+- **Combustion:** Yes 
+- **Outputs:** Plot (total mass vs. time)
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/083b488a-6d74-46c6-b134-311d4991bdad" />
 
 
 ### `Script B.ipynb`
 - **System:** Boeing 777-300ER Engine
 - **Dimensions:** 0D 
-- **Combustion:** yes 
-- **Outputs:** list the variables, metrics, and plots the notebook produces
+- **Combustion:** Yes 
+- **Outputs:** Plot (Temperature/Fuel Mass Fraction vs time), residence time
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/d21ff469-4dc9-4136-99a3-e3a79639efa1" />
 
 
 ### `Script C.ipynb`
 - **System:** Falcon Heavy Boosters and Throttling
 - **Dimensions:** 1D 
-- **Combustion:** no
-- **Outputs:** list the variables, metrics, and plots the notebook produces
+- **Combustion:** No
+- **Outputs:** Plots (altitude vs time, dynamic pressure vs altitude, total mass vs time)
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/2f60f00e-2776-4b17-b8c5-331c6ca98a62" />
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/0434de96-f2e6-43b2-867f-b42342e8befc" />
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/ecfed296-c4fd-452a-b05f-e4fe01884b3c" />
@@ -109,7 +109,7 @@ mpl.rcParams.update({
 - **System:** Optimizing Pressure Ratio
 - **Dimensions:** 0D 
 - **Combustion:** yes
-- **Outputs:** list the variables, metrics, and plots the notebook produces
+- **Outputs:** Table of optimized outputs
 **Ideal cycle + Cantera combustor**
 
 | Metric                       | Value                 |
