@@ -8,17 +8,17 @@ A compact collection of aerospace models **rockets, engines, and flame physics**
 
 ## 📦 Contents
 
-- Notebooks: `Script A.ipynb`, `Script B.ipynb`, `Script C.ipynb`, `Script D.ipynb`
+- Notebooks: `Ariane 6.ipynb`, `Boeing 777 300ER Engine.ipynb`, `Two Stage Rocket and Throttling.ipynb`, `Optimizing a Jet Engine.ipynb`
 - External Mechanisms: `Mechanism1.yaml`, `C7H16.yaml`
 - This README and a minimal `requirements.txt`
 
 Contents Include:
 ```
 
-├── Script A.ipynb
-├── Script B.ipynb
-├── Script C.ipynb
-├── Script D.ipynb
+├── Ariane 6.ipynb
+├── Boeing 777 300ER Engine.ipynb
+├── Two Stage Rocket and Throttling.ipynb
+├── Optimizing a Jet Engine.ipynb
 ├── Mechanism1.yaml (n-dodecane)
 ├── C7H16.yaml
 └── README.md
@@ -51,7 +51,7 @@ jupyter lab  # or: jupyter notebook
 
 > Replace any placeholders below with specifics if your notebooks print/annotate them.
 
-### `Script A.ipynb`
+### `Ariane 6.ipynb`
 - **System:** Ariane 6 Rocket with Separation
 - **Dimensions:** 0D 
 - **Combustion:** Yes 
@@ -59,7 +59,7 @@ jupyter lab  # or: jupyter notebook
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/083b488a-6d74-46c6-b134-311d4991bdad" />
 
 
-### `Script B.ipynb`
+### `Boeing 777 3000ER Engine.ipynb`
 - **System:** Boeing 777-300ER Engine
 - **Dimensions:** 0D 
 - **Combustion:** Yes 
@@ -67,7 +67,7 @@ jupyter lab  # or: jupyter notebook
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/d21ff469-4dc9-4136-99a3-e3a79639efa1" />
 
 
-### `Script C.ipynb`
+### `Two Stage Rocket and Throttling.ipynb`
 - **System:** Falcon Heavy Boosters and Throttling
 - **Dimensions:** 1D 
 - **Combustion:** No
@@ -76,7 +76,7 @@ jupyter lab  # or: jupyter notebook
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/0434de96-f2e6-43b2-867f-b42342e8befc" />
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/ecfed296-c4fd-452a-b05f-e4fe01884b3c" />
 
-### `Script D.ipynb`
+### `Optimizing a Jet Engine.ipynb`
 - **System:** Optimizing Pressure Ratio
 - **Dimensions:** 0D 
 - **Combustion:** yes
