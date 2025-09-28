@@ -76,7 +76,7 @@ jupyter lab  # or: jupyter notebook
 
 
 ### `Rocket Staged and Throttled.ipynb`
-- **System:** Falcon Heavy Boosters and Throttling
+- **System:** Falcon Heavy 
 - **Dimensions:** 1D 
 - **Combustion:** No
 - **Outputs:** Plots (altitude vs time, dynamic pressure vs altitude, total mass vs time)
@@ -85,9 +85,9 @@ jupyter lab  # or: jupyter notebook
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/ecfed296-c4fd-452a-b05f-e4fe01884b3c" />
 
 ### `Engine Optimizing for Pressure Ratio.ipynb`
-- **System:** Optimizing Pressure Ratio
+- **System:** PW4000-94
 - **Dimensions:** 0D 
-- **Combustion:** yes
+- **Combustion:** yes (n-dodecane)
 - **Outputs:** Table of optimized outputs
 **Ideal cycle + Cantera combustor**
 
