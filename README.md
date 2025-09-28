@@ -8,10 +8,6 @@ A compact collection of aerospace models **rockets, engines, and flame physics**
 
 ## 📦 Contents
 
-- Notebooks: `Ariane 6.ipynb`, `Boeing 777 300ER Engine.ipynb`, `Two Stage Rocket and Throttling.ipynb`, `Optimizing a Jet Engine.ipynb`
-- External Mechanisms: `Mechanism1.yaml`, `C7H16.yaml`
-- This README and a minimal `requirements.txt`
-
 Contents Include:
 ```
 
