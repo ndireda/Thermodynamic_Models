@@ -1,4 +1,4 @@
-# Aerospace System Models
+# Thermodynamic Systems: Modeling in Python
 
 A compact collection of aerospace models **rockets, engines, and flame physics**; implemented as reproducible Jupyter notebooks with **plots**. This repo is ideal for students and practitioners who want clear, minimal models they can run and extend.
 
