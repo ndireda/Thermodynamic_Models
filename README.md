@@ -68,7 +68,7 @@ jupyter lab  # or: jupyter notebook
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/d21ff469-4dc9-4136-99a3-e3a79639efa1" />
 
 
-### 'Rocket Falcon Heavy Optimal Throttle Schedules.ipynb'
+### `Rocket Falcon Heavy Optimal Throttle Schedules.ipynb`
 - **System:** Falcon Heavy
 - **Dimensions:** 1D 
 - **Combustion:** No
