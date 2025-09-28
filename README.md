@@ -15,10 +15,11 @@ A compact collection of aerospace models **rockets, engines, and flame physics**
 Contents Include:
 ```
 
-├── Ariane 6.ipynb
-├── Boeing 777 300ER Engine.ipynb
-├── Two Stage Rocket and Throttling.ipynb
-├── Optimizing a Jet Engine.ipynb
+├── Rocket Ariane 6 Staged Mass Loss.ipynb
+├── Engine GE90 Residence Time.ipynb
+├── Rocket Falcon Heavy Optimal Throttle Schedules.ipynb
+├── Rocket Staged and Throttled.ipynb
+├── Engine Optimizing for Pressure Ratio.ipynb
 ├── Mechanism1.yaml (n-dodecane)
 ├── C7H16.yaml
 └── README.md
@@ -51,23 +52,34 @@ jupyter lab  # or: jupyter notebook
 
 > Replace any placeholders below with specifics if your notebooks print/annotate them.
 
-### `Ariane 6.ipynb`
+### `Rocket Ariane 6 Staged Mass Loss.ipynb`
 - **System:** Ariane 6 Rocket with Separation
 - **Dimensions:** 0D 
-- **Combustion:** Yes 
+- **Combustion:** Yes (Hydrogen)
 - **Outputs:** Plot (total mass vs. time)
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/083b488a-6d74-46c6-b134-311d4991bdad" />
 
 
-### `Boeing 777 3000ER Engine.ipynb`
+### `Engine GE90 Residence Time.ipynb`
 - **System:** Boeing 777-300ER Engine
 - **Dimensions:** 0D 
-- **Combustion:** Yes 
+- **Combustion:** Yes (Heptane)
 - **Outputs:** Plot (Temperature/Fuel Mass Fraction vs time), residence time
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/d21ff469-4dc9-4136-99a3-e3a79639efa1" />
 
 
-### `Two Stage Rocket and Throttling.ipynb`
+### 'Rocket Falcon Heavy Optimal Throttle Schedules.ipynb'
+- **System:** Falcon Heavy
+- **Dimensions:** 1D 
+- **Combustion:** No
+- **Outputs:** Plots (Thrust vs time, Propellant mass vs time, Velocity vs time, Altitude vs time
+<img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/f46a74b9-c598-4b1c-a753-295c15c4db07" />
+<img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/62b85b4b-0d95-4795-bb03-15398cd81bcd" />
+<img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/e2021b44-3ce0-4b5f-ab19-0beef5657c93" />
+<img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/12e05f52-5e04-4502-be8c-59fea0893d03" />
+
+
+### `Rocket Staged and Throttled.ipynb`
 - **System:** Falcon Heavy Boosters and Throttling
 - **Dimensions:** 1D 
 - **Combustion:** No
@@ -76,7 +88,7 @@ jupyter lab  # or: jupyter notebook
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/0434de96-f2e6-43b2-867f-b42342e8befc" />
 <img width="600" height="380" alt="image" src="https://github.com/user-attachments/assets/ecfed296-c4fd-452a-b05f-e4fe01884b3c" />
 
-### `Optimizing a Jet Engine.ipynb`
+### `Engine Optimizing for Pressure Ratio.ipynb`
 - **System:** Optimizing Pressure Ratio
 - **Dimensions:** 0D 
 - **Combustion:** yes
