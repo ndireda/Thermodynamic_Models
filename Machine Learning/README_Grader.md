@@ -2,8 +2,8 @@
 
 A lightweight grading pipeline that:
 1) **Ingests** an input prompt and any attached files (rubric + optional references).
-2) **Generates** a candidate response with an LLM.
-3) **Grades** the candidate against the rubric (and optionally references).
+2) **Generates** a candidate response with any LLM in the OpenAI API.
+3) **Grades** the candidate against the rubric using any LLM in the OpenAI API.
 4) **Exports** a **PDF** report with the verdict and rationale.
 
 > Implemented in the notebook `Grader_Config_RLHF.ipynb` using `openai` and `reportlab`.
