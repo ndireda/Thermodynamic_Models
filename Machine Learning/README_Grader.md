@@ -12,19 +12,8 @@ A lightweight grading pipeline that:
 
 ## Flow
 
-```mermaid
-flowchart TD
-    A[User prompt + attachments] --> B[Load prompt file]
-    A --> C[Load rubric file]
-    A --> D[Load reference files (optional)]
-    B --> E[Generate candidate response (LLM)]
-    C --> F[Grade per rubric (scoring + rationale)]
-    D --> F
-    E --> F
-    F --> G[Verdict + Rationale]
-    G --> H[Build PDF report]
-    H --> I[Save PDF path]
-```
+
+<img width="969" height="1580" alt="grader_flow_bw" src="https://github.com/user-attachments/assets/42299eeb-c716-459d-beba-0abb4db76479" />
 
 ---
 
