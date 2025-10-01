@@ -13,7 +13,7 @@ A lightweight grading pipeline that:
 ## Flow
 
 
-<img width="969" height="1580" alt="grader_flow_bw" src="https://github.com/user-attachments/assets/42299eeb-c716-459d-beba-0abb4db76479" />
+<img width="700" height="1100" alt="grader_flow_bw" src="https://github.com/user-attachments/assets/42299eeb-c716-459d-beba-0abb4db76479" />
 
 ---
 
