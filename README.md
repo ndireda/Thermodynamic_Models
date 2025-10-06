@@ -113,6 +113,66 @@ jupyter lab  # or: jupyter notebook
 
 ---
 
+## 🧭 Running the full workflow in Google Colab
+
+The repository includes three entry points you will usually execute together:
+
+1. The **Brayton-cycle script** (`python brayton.py`) – exercises the
+   modular gas-turbine solver and prints a summary of the current operating
+   point.
+2. The **unit test suite** (`pytest -q`) – validates the solver, regression
+   data, and constant-property flag.
+3. Any **notebook or ad-hoc study** you want to run (e.g., the notebooks in
+   `Therm_Models/notebooks/`).
+
+Below is a minimal Colab notebook skeleton that wires all three together. You
+can paste these cells into a fresh Colab runtime and run them top-to-bottom.
+
+```python
+# --- 1. Runtime preparation -------------------------------------------------
+!pip install --quiet "pip>=23"  # modern pip keeps resolver errors informative
+!pip install --quiet -r https://raw.githubusercontent.com/<your-user>/Thermodynamic_Models/main/requirements.txt
+!pip install --quiet papermill
+
+# Optional: clone your fork to edit notebooks or push results
+%cd /content
+!git clone https://github.com/<your-user>/Thermodynamic_Models.git
+%cd Thermodynamic_Models
+
+# --- 2. Continuous-integration style smoke test ----------------------------
+import pathlib
+
+# Run the Brayton example script (mirrors `python brayton.py`)
+!python brayton.py
+
+# Execute the regression/unit tests
+!pytest -q
+
+# --- 3. Launch notebooks or additional studies -----------------------------
+# Colab already ships with Jupyter; use nbformat/nbconvert if you need to
+# batch-run notebooks.  Example: parameter sweep via papermill.
+import papermill as pm
+
+notebook_dir = pathlib.Path("Therm_Models/notebooks")
+pm.execute_notebook(
+    notebook_dir / "Engine Optimizing for Pressure Ratio.ipynb",
+    notebook_dir / "Engine Optimizing for Pressure Ratio - output.ipynb",
+)
+
+# View results directly in Colab's file browser or download artifacts.
+```
+
+**Tips for scaling this workflow**
+
+- Use Colab "runtime type" > GPU only if a notebook explicitly benefits; the
+  thermodynamic scripts are CPU-oriented.
+- For multi-point design studies, wrap the papermill call in a loop over
+  ambient schedules, writing each output notebook to a unique name.
+- Store large data files on Google Drive, then `drive.mount("/content/drive")`
+  before running the setup cell so notebooks can access shared inputs.
+
+---
+
 ## 🧪 Tested with
 
 - Python 3.11
