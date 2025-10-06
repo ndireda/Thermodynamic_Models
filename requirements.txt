@@ -4,3 +4,4 @@ cftime==1.6.4.post1
 ruamel.yaml==0.18.10
 matplotlib>=3.8
 jupyter>=1.0
+scipy>=1.12

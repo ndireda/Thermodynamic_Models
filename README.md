@@ -44,6 +44,51 @@ jupyter lab  # or: jupyter notebook
 
 ---
 
+## 📥 Getting the repository
+
+Whether you prefer to work locally, in Colab, or on another hosted service, you
+have a few options to bring the project onto your machine:
+
+### Option A — Clone with Git (recommended)
+
+```bash
+git clone https://github.com/<your-user>/Thermodynamic_Models.git
+cd Thermodynamic_Models
+```
+
+Cloning keeps the Git history so you can pull updates, push changes, and create
+branches or pull requests. Replace `<your-user>` with the owner of your fork if
+you are working from a personal copy.
+
+### Option B — Download a ZIP snapshot
+
+1. Navigate to the repository page in your browser.
+2. Click **Code ▾ → Download ZIP**.
+3. Extract the archive locally (macOS Finder, Windows Explorer, or `unzip` on
+   the command line).
+4. Open a terminal in the extracted folder and follow the [Quickstart](#-quickstart)
+   steps to create an environment and install dependencies.
+
+### Option C — Pull directly inside Google Colab
+
+In a new Colab notebook, run:
+
+```python
+%cd /content
+!git clone https://github.com/<your-user>/Thermodynamic_Models.git
+%cd Thermodynamic_Models
+```
+
+This mirrors the workflow documented in the
+[Google Colab section](#-running-the-full-workflow-in-google-colab) and is
+useful when you want to keep everything in the cloud.
+
+> **Tip:** if you are handed the files outside of Git, simply drop the folder in
+> your working directory and run the same commands from the Quickstart. The
+> models rely only on the Python source and notebooks present in the repository.
+
+---
+
 ## 📚 Model Catalog (at a glance)
 
 > Replace any placeholders below with specifics if your notebooks print/annotate them.
@@ -110,6 +155,66 @@ jupyter lab  # or: jupyter notebook
 - Pin versions using `requirements.txt` (or add a conda `environment.yml`).
 - For deterministic runs, set RNG seeds where applicable.
 - Mechanism files are included to avoid external downloads.
+
+---
+
+## 🧭 Running the full workflow in Google Colab
+
+The repository includes three entry points you will usually execute together:
+
+1. The **Brayton-cycle script** (`python brayton.py`) – exercises the
+   modular gas-turbine solver and prints a summary of the current operating
+   point.
+2. The **unit test suite** (`pytest -q`) – validates the solver, regression
+   data, and constant-property flag.
+3. Any **notebook or ad-hoc study** you want to run (e.g., the notebooks in
+   `Therm_Models/notebooks/`).
+
+Below is a minimal Colab notebook skeleton that wires all three together. You
+can paste these cells into a fresh Colab runtime and run them top-to-bottom.
+
+```python
+# --- 1. Runtime preparation -------------------------------------------------
+!pip install --quiet "pip>=23"  # modern pip keeps resolver errors informative
+!pip install --quiet -r https://raw.githubusercontent.com/<your-user>/Thermodynamic_Models/main/requirements.txt
+!pip install --quiet papermill
+
+# Optional: clone your fork to edit notebooks or push results
+%cd /content
+!git clone https://github.com/<your-user>/Thermodynamic_Models.git
+%cd Thermodynamic_Models
+
+# --- 2. Continuous-integration style smoke test ----------------------------
+import pathlib
+
+# Run the Brayton example script (mirrors `python brayton.py`)
+!python brayton.py
+
+# Execute the regression/unit tests
+!pytest -q
+
+# --- 3. Launch notebooks or additional studies -----------------------------
+# Colab already ships with Jupyter; use nbformat/nbconvert if you need to
+# batch-run notebooks.  Example: parameter sweep via papermill.
+import papermill as pm
+
+notebook_dir = pathlib.Path("Therm_Models/notebooks")
+pm.execute_notebook(
+    notebook_dir / "Engine Optimizing for Pressure Ratio.ipynb",
+    notebook_dir / "Engine Optimizing for Pressure Ratio - output.ipynb",
+)
+
+# View results directly in Colab's file browser or download artifacts.
+```
+
+**Tips for scaling this workflow**
+
+- Use Colab "runtime type" > GPU only if a notebook explicitly benefits; the
+  thermodynamic scripts are CPU-oriented.
+- For multi-point design studies, wrap the papermill call in a loop over
+  ambient schedules, writing each output notebook to a unique name.
+- Store large data files on Google Drive, then `drive.mount("/content/drive")`
+  before running the setup cell so notebooks can access shared inputs.
 
 ---
 
