@@ -1,4 +1,4 @@
-"""High-level Brayton-cycle modeling toolkit with NPSS-style workflows.
+"""
 
 The module restructures the earlier scalar Brayton script into a modular
 framework that mirrors modern propulsion analysis practices:
@@ -24,9 +24,6 @@ framework that mirrors modern propulsion analysis practices:
   physical and operability constraints (thermal limits, surge margin, specific
   work targets, etc.).
 
-The code purposely remains compact and educational, but the scaffolding mirrors
-an NPSS-style workflow and can grow into a production-ready tool with richer
-maps or property packages.
 """
 
 from __future__ import annotations
