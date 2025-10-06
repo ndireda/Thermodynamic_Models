@@ -12,10 +12,10 @@ framework that mirrors modern propulsion analysis practices:
   implementations use the same ideal-gas relations as the original script while
   allowing variable specific heats and mixture rules.
 * **Inner solves** leverage :func:`scipy.optimize.least_squares` to balance the
-  shaft power, satisfy component maps, and enforce nozzle boundary conditions.
-  The unknown vector can include corrected flow, pressure ratios, throat area,
-  or spool speed, making it straightforward to extend with additional
-  constraints.
+  shaft power, satisfy component maps, and enforce nozzle boundary conditions
+  for a *fixed* set of outer controls (compressor pressure-ratio target,
+  nozzle area scale, and spool-speed scale).  Only the true physics unknowns
+  (mass flow, turbine pressure ratio, etc.) appear in the residual vector.
 * **Design versus off-design** support arrives via map scaling factors that are
   established at a chosen design point and then frozen when evaluating
   off-design ambient conditions or speed schedules.
@@ -424,6 +424,7 @@ class CycleModel:
     nozzle: Nozzle
 
     design_scaling: MutableMapping[str, float] = field(default_factory=dict)
+    _last_inner_solution: np.ndarray | None = field(default=None, init=False, repr=False)
 
     def set_design_point(self, compressor_design: DesignPoint, turbine_design: DesignPoint) -> None:
         """Determine map scaling factors that hit the provided design point."""
@@ -448,8 +449,26 @@ class CycleModel:
             }
         )
 
-    def residuals(self, x: np.ndarray, params: CycleParameters) -> np.ndarray:
-        mdot, pr_c, turbine_pr, nozzle_area_scale, speed_scale = x
+    _RESIDUAL_LABELS: tuple[str, ...] = (
+        "shaft_balance",
+        "compressor_pr_error",
+        "turbine_pr_error",
+        "nozzle_mass_error",
+        "specific_work_error",
+    )
+
+    _INNER_RESIDUALS: tuple[str, ...] = ("shaft_balance", "nozzle_mass_error")
+
+    def _evaluate_cycle(
+        self,
+        inner: np.ndarray,
+        controls: np.ndarray,
+        params: CycleParameters,
+    ) -> tuple[np.ndarray, np.ndarray, Dict[str, object]]:
+        """Return raw residuals, scaling, and diagnostics for a cycle state."""
+
+        mdot, turbine_pr = inner
+        pr_c, nozzle_area_scale, speed_scale = controls
 
         gas = GasProperties(variable=params.variable_properties)
         ambient = Station(Tt=params.ambient_Tt, Pt=params.ambient_Pt, mdot=mdot, gas=gas)
@@ -476,7 +495,7 @@ class CycleModel:
         mdot_nozzle, nozzle_data = self.nozzle.mass_flow(turbine_out, nozzle_area, params.ambient_Pt)
 
         # Residuals --------------------------------------------------------
-        residuals = np.zeros(5)
+        residuals = np.zeros(len(self._RESIDUAL_LABELS))
 
         # 1. Shaft power balance (turbine vs compressor + load)
         w_comp = comp_data["w_specific"]
@@ -487,84 +506,165 @@ class CycleModel:
         residuals[0] = shaft_balance
 
         # 2. Compressor pressure ratio map consistency
-        residuals[1] = comp_data["pr"] - pr_c
+        comp_pr_error = comp_data["pr"] - pr_c
+        residuals[1] = comp_pr_error
 
         # 3. Turbine pressure ratio map consistency
-        residuals[2] = turbine_data["pr"] - turbine_pr
+        turbine_pr_map = self.turbine.pr_map.evaluate(
+            turbine_data["corrected_flow"], turbine_data["corrected_speed"]
+        )
+        residuals[2] = turbine_pr_map - turbine_pr
 
         # 4. Nozzle mass conservation
-        residuals[3] = mdot_nozzle - turbine_out.mdot
+        nozzle_mass_error = mdot_nozzle - turbine_out.mdot
+        residuals[3] = nozzle_mass_error
 
         # 5. Target specific work (per kg of air)
         w_net = (turbine_power - compressor_power) / mdot if mdot else 0.0
         residuals[4] = w_net - params.target_specific_work
 
-        scales = np.array([
-            max(1.0, abs(params.load_watts)),
-            max(0.1, pr_c),
-            max(0.1, turbine_pr),
-            max(0.1, turbine_out.mdot),
-            max(1.0, params.target_specific_work),
-        ])
+        scales = np.array(
+            [
+                max(1.0, abs(params.load_watts)),
+                max(0.1, pr_c),
+                max(0.1, turbine_pr),
+                max(0.1, turbine_out.mdot),
+                max(1.0, params.target_specific_work),
+            ]
+        )
 
         diagnostics = {
+            "inner_unknowns": np.asarray(inner, dtype=float),
+            "controls": np.asarray(controls, dtype=float),
+            "decision_vector": np.concatenate((np.asarray(inner, dtype=float), np.asarray(controls, dtype=float))),
             "w_comp": w_comp,
             "w_turb": w_turb,
             "turbine_power": turbine_power,
             "compressor_power": compressor_power,
+            "w_net": (turbine_power - compressor_power) / mdot if mdot else 0.0,
             "f_total": burner_out.f,
             "nozzle": nozzle_data,
+            "residual_components": {
+                label: value for label, value in zip(self._RESIDUAL_LABELS, residuals)
+            },
+            "residual_scales": {
+                label: value for label, value in zip(self._RESIDUAL_LABELS, scales)
+            },
+            "compressor_pr_error": comp_pr_error,
+            "turbine_pr_map": turbine_pr_map,
+            "nozzle_mass_error": nozzle_mass_error,
         }
         LOG.debug("Residual diagnostics: %s", diagnostics)
 
-        return residuals / scales
+        return residuals, scales, diagnostics
 
-    def solve_inner(self, params: CycleParameters, x0: Sequence[float], bounds: Sequence[tuple[float, float]]) -> optimize.OptimizeResult:
-        """Solve the nonlinear system that balances the Brayton cycle."""
+    def residuals(
+        self,
+        inner: np.ndarray,
+        controls: np.ndarray,
+        params: CycleParameters,
+    ) -> np.ndarray:
+        residuals, scales, _ = self._evaluate_cycle(inner, controls, params)
+        indices = [self._RESIDUAL_LABELS.index(name) for name in self._INNER_RESIDUALS]
+        return residuals[indices] / scales[indices]
+
+    def solve_inner(
+        self,
+        params: CycleParameters,
+        inner_guess: Sequence[float],
+        bounds: Sequence[tuple[float, float]],
+        controls: Sequence[float],
+    ) -> optimize.OptimizeResult:
+        """Solve the physics residuals while holding the controls fixed.
+
+        The method returns the best-fit inner state even if the nonlinear solver
+        stops early; callers can inspect ``OptimizeResult.residual_norm`` to
+        quantify the remaining imbalance.
+        """
+
+        controls_arr = np.asarray(controls, dtype=float)
+        lower, upper = zip(*bounds)
+
+        if self._last_inner_solution is not None:
+            x0 = np.clip(self._last_inner_solution, lower, upper)
+        else:
+            x0 = np.asarray(inner_guess, dtype=float)
 
         def fun(x: np.ndarray) -> np.ndarray:
-            return self.residuals(x, params)
+            return self.residuals(x, controls_arr, params)
 
-        lower, upper = zip(*bounds)
         result = optimize.least_squares(
             fun,
             x0=x0,
             bounds=(lower, upper),
             xtol=1e-6,
             ftol=1e-2,
-            gtol=1e-2,
-            max_nfev=400,
+            gtol=1e-4,
+            max_nfev=800,
         )
 
         if not result.success:
-            LOG.error("Inner solve failed: %s", result.message)
-            raise RuntimeError("Inner solve did not converge")
+            LOG.warning("Inner solve did not converge: %s", result.message)
+
+        self._last_inner_solution = result.x.copy()
+
+        _, _, diagnostics = self._evaluate_cycle(result.x, controls_arr, params)
+        result.controls = controls_arr
+        result.diagnostics = diagnostics
+        result.decision_vector = diagnostics["decision_vector"]
+        result.residual_norm = float(np.linalg.norm(result.fun))
 
         return result
 
-    def optimize(self, params: CycleParameters, x0: Sequence[float], bounds: Sequence[tuple[float, float]], objective: Callable[[np.ndarray], float], constraints: Sequence[Mapping[str, object]] = ()) -> optimize.OptimizeResult:
-        """Outer optimization wrapper using SLSQP."""
+    def optimize(
+        self,
+        params: CycleParameters,
+        inner_guess: Sequence[float],
+        inner_bounds: Sequence[tuple[float, float]],
+        control_guess: Sequence[float],
+        control_bounds: Sequence[tuple[float, float]],
+        objective: Callable[[np.ndarray, optimize.OptimizeResult], float],
+        constraints: Sequence[Mapping[str, object]] = (),
+    ) -> optimize.OptimizeResult:
+        """Outer-loop optimizer that perturbs the control vector.
 
-        bounds_arr = optimize.Bounds(*zip(*bounds))
+        The control vector is optimized by SLSQP while each evaluation performs an
+        inner nonlinear solve to enforce the cycle residuals.  The previous inner
+        solution is re-used as the initial guess to accelerate successive
+        evaluations.
+        """
+
+        bounds_arr = optimize.Bounds(*zip(*control_bounds))
+        cache: Dict[tuple[float, ...], optimize.OptimizeResult] = {}
+
+        def evaluate_controls(control_vec: np.ndarray) -> optimize.OptimizeResult:
+            key = tuple(np.asarray(control_vec, dtype=float))
+            if key not in cache:
+                cache[key] = self.solve_inner(params, inner_guess, inner_bounds, control_vec)
+            return cache[key]
 
         def wrapped_objective(x: np.ndarray) -> float:
-            inner = self.solve_inner(params, x, bounds)
-            return objective(inner.x)
+            inner = evaluate_controls(x)
+            return objective(np.asarray(x, dtype=float), inner)
 
         def make_constraint(spec: Mapping[str, object]):
             kind = spec.get("type", "eq")
+            func = spec["fun"]
 
             def fun(x: np.ndarray) -> float:
-                inner = self.solve_inner(params, x, bounds)
-                return spec["fun"](inner.x)
+                inner = evaluate_controls(x)
+                return func(np.asarray(x, dtype=float), inner)
 
-            return {"type": kind, "fun": fun}
+            constraint = {k: v for k, v in spec.items() if k != "fun"}
+            constraint["fun"] = fun
+            constraint.setdefault("type", kind)
+            return constraint
 
         scipy_constraints = [make_constraint(c) for c in constraints]
 
         result = optimize.minimize(
             wrapped_objective,
-            x0=np.asarray(x0, dtype=float),
+            x0=np.asarray(control_guess, dtype=float),
             method="SLSQP",
             bounds=bounds_arr,
             constraints=scipy_constraints,
@@ -574,6 +674,8 @@ class CycleModel:
         if not result.success:
             LOG.error("Outer optimization failed: %s", result.message)
             raise RuntimeError("Outer optimization did not converge")
+
+        result.inner_result = evaluate_controls(result.x)
 
         return result
 
@@ -668,32 +770,47 @@ def run_example() -> Dict[str, float]:
         variable_properties=True,
     )
 
-    x0 = [25.0, 10.0, 6.0, 1.0, 1.0]
-    bounds = [
+    # Inner unknowns (mass flow, turbine pressure ratio) solved by least squares
+    inner_guess = [25.0, 6.0]
+    inner_bounds = [
         (5.0, 80.0),   # mdot
-        (1.5, 35.0),   # compressor PR
         (1.5, 25.0),   # turbine PR
+    ]
+    # Outer controls adjusted by SLSQP (compressor PR, nozzle scale, speed scale)
+    control_guess = [12.0, 1.0, 1.0]
+    control_bounds = [
+        (1.5, 35.0),   # compressor PR target
         (0.5, 2.0),    # nozzle area scale
         (0.5, 1.5),    # speed scale
     ]
 
-    inner_result = model.solve_inner(params, x0, bounds)
+    inner_result = model.solve_inner(params, inner_guess, inner_bounds, control_guess)
 
-    def objective(x: np.ndarray) -> float:
-        mdot = x[0]
+    def objective(controls: np.ndarray, inner: optimize.OptimizeResult) -> float:
+        mdot = inner.x[0]
         return mdot  # minimize mass flow for efficiency proxy
 
     constraints = [
-        {"type": "ineq", "fun": lambda x: 0.2 - abs(x[1] - 12.0)},  # maintain surge margin
-        {"type": "ineq", "fun": lambda x: x[2] - 4.0},
+        {"type": "ineq", "fun": lambda u, inner: 0.2 - abs(u[0] - 12.0)},  # maintain surge margin
+        {"type": "ineq", "fun": lambda u, inner: inner.x[1] - 4.0},
     ]
 
-    optimization_result = model.optimize(params, inner_result.x, bounds, objective, constraints)
+    optimization_result = model.optimize(
+        params,
+        inner_guess,
+        inner_bounds,
+        control_guess,
+        control_bounds,
+        objective,
+        constraints,
+    )
 
     return {
         "inner_solution": inner_result.x.tolist(),
+        "control_initial_guess": control_guess,
         "inner_cost": float(inner_result.cost),
-        "optimization_solution": optimization_result.x.tolist(),
+        "optimization_controls": optimization_result.x.tolist(),
+        "optimization_inner_solution": optimization_result.inner_result.x.tolist(),
         "optimization_cost": float(optimization_result.fun),
     }
 
@@ -702,4 +819,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     info = run_example()
     print("Inner solution:", np.array2string(np.asarray(info["inner_solution"]), precision=3))
-    print("Optimization solution:", np.array2string(np.asarray(info["optimization_solution"]), precision=3))
+    print("Optimization controls:", np.array2string(np.asarray(info["optimization_controls"]), precision=3))

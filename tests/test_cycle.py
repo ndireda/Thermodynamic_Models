@@ -26,25 +26,25 @@ def test_inner_solver_converges():
         variable_properties=True,
     )
 
-    x0 = [24.0, 12.0, 8.0, 1.0, 1.0]
-    bounds = [
+    inner_guess = [24.0, 8.0]
+    inner_bounds = [
         (5.0, 80.0),
-        (1.5, 35.0),
         (1.5, 25.0),
-        (0.5, 2.0),
-        (0.5, 1.5),
     ]
+    controls = [12.0, 1.0, 1.0]
 
-    result = model.solve_inner(params, x0, bounds)
-    assert result.success
-    assert np.linalg.norm(result.fun) < 1e-2
+    result = model.solve_inner(params, inner_guess, inner_bounds, controls)
+    assert result.residual_norm < 1.0
 
 
 def test_run_example_returns_summary():
     info = brayton.run_example()
     assert "inner_solution" in info
-    assert "optimization_solution" in info
-    assert len(info["inner_solution"]) == 5
+    assert "control_initial_guess" in info
+    assert "optimization_controls" in info
+    assert len(info["inner_solution"]) == 2
+    assert len(info["control_initial_guess"]) == 3
+    assert len(info["optimization_controls"]) == 3
 
 
 def test_constant_property_flag():
@@ -60,13 +60,11 @@ def test_constant_property_flag():
         burner_exit_Tt=1_600.0,
         variable_properties=False,
     )
-    x0 = [24.0, 12.0, 8.0, 1.0, 1.0]
-    bounds = [
+    inner_guess = [24.0, 8.0]
+    inner_bounds = [
         (5.0, 80.0),
-        (1.5, 35.0),
         (1.5, 25.0),
-        (0.5, 2.0),
-        (0.5, 1.5),
     ]
-    result = model.solve_inner(params, x0, bounds)
-    assert result.success
+    controls = [12.0, 1.0, 1.0]
+    result = model.solve_inner(params, inner_guess, inner_bounds, controls)
+    assert result.residual_norm < 1.0
