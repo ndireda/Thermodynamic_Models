@@ -12,9 +12,8 @@ This notebook was generated from the uploaded Python module and preserves the or
 Run the cells in order to reproduce the module behavior, and use `run_example()` at the end to see a sample result.
 
 ## Overview & imports
-"""
 
-"""High-level Brayton-cycle modeling toolkit with NPSS-style workflows.
+High-level Brayton-cycle modeling toolkit with NPSS-style workflows.
 
 The module restructures the earlier scalar Brayton script into a modular
 framework that mirrors modern propulsion analysis practices:
@@ -26,7 +25,7 @@ framework that mirrors modern propulsion analysis practices:
 * **Components** (compressor, burner, turbine, duct, and nozzle) expose
   consistent call signatures and map-based performance predictions.  Their
   implementations use the same ideal-gas relations as the original script while
-  allowing variable specific heats and mixture rules.
+allowing variable specific heats and mixture rules.
 * **Inner solves** leverage :func:`scipy.optimize.least_squares` to balance the
   shaft power, satisfy component maps, and enforce nozzle boundary conditions
   for a *fixed* set of outer controls (compressor pressure-ratio target,
@@ -704,19 +703,24 @@ def optimize_physics_constrained(
         return inner, ctrls
 
     def objective(x: np.ndarray) -> float:
-        # minimize mass flow
-        return float(x[0])
+        penalty = float(np.sum(normalized_residuals(x) ** 2))
+        return float(x[0] + 1_000_000.0 * penalty)
 
     # Return a *vector* of equality residuals normalized by scales
-    def eq_residuals(x: np.ndarray) -> np.ndarray:
+    def normalized_residuals(x: np.ndarray) -> np.ndarray:
         inner, ctrls = split(x)
         residuals, scales, _ = self._evaluate_cycle(inner, ctrls, params)
-        idxs = [0, 1, 2, 3]  # shaft, comp_pr_err, turb_pr_err, nozzle_mass
+        idxs = [0, 1, 2, 3]
         if enforce_specific_work:
             idxs.append(4)
         return residuals[idxs] / scales[idxs]
 
-    constraints = [{"type": "eq", "fun": eq_residuals}]  # vector equality
+    def make_constraint(idx: int):
+        return {"type": "eq", "fun": lambda x, j=idx: float(normalized_residuals(x)[j])}
+
+    constraints = [
+        make_constraint(i) for i in range(4 + (1 if enforce_specific_work else 0))
+    ]
 
     result = optimize.minimize(
         fun=objective,
@@ -740,24 +744,24 @@ def optimize_physics_constrained(
 def _build_default_cycle(variable_properties: bool = False) -> CycleModel:
     gas = GasProperties(variable=variable_properties)
 
-    # --- Compressor maps (design: PR≈13, η≈0.88 @ corrected_flow=22, speed=1) ---
+    # --- Compressor maps (large-frame design: PR≈24, η≈0.89 @ corrected_flow≈430 kg/s) ---
     coeffs_pr = np.array([
-        [-34.0, 21.0, -8.0],   # ~12 at (x=1, y=1)
+        [-34.0, 21.0, -8.0],
         [ 61.0,  5.0,  0.0],
         [-33.0,  0.0,  0.0],
     ])
     coeffs_eta = np.array([
-        [-1.32,  2.0, -1.0],   # ~0.88 at (x=1, y=1)
+        [-1.32,  2.0, -1.0],
         [  2.4,  0.0,  0.0],
         [ -1.2,  0.0,  0.0],
     ])
     compressor = Compressor(
-        pr_map=MapSurface(coeffs=coeffs_pr,  flow_ref=22.0, speed_ref=1.0),
-        eta_map=MapSurface(coeffs=coeffs_eta, flow_ref=22.0, speed_ref=1.0),
+        pr_map=MapSurface(coeffs=coeffs_pr,  flow_ref=430.0, speed_ref=1.0),
+        eta_map=MapSurface(coeffs=coeffs_eta, flow_ref=430.0, speed_ref=1.0),
         mech_efficiency=0.99,
     )
 
-    # --- Turbine maps (design: PR≈8, η≈0.90 @ corrected_flow=20, speed=1) ---
+    # --- Turbine maps (large-frame design: PR≈12, η≈0.91 @ corrected_flow≈95 kg/s) ---
     turbine_coeffs_pr = np.array([
         [ -2.0,  7.0, -1.0],   # ~8 at (x=1, y=1)
         [  8.0,  1.0,  0.0],
@@ -769,8 +773,8 @@ def _build_default_cycle(variable_properties: bool = False) -> CycleModel:
         [ -0.8,  0.0,  0.0],
     ])
     turbine = Turbine(
-        pr_map=MapSurface(coeffs=turbine_coeffs_pr,  flow_ref=20.0, speed_ref=1.0),
-        eta_map=MapSurface(coeffs=turbine_coeffs_eta, flow_ref=20.0, speed_ref=1.0),
+        pr_map=MapSurface(coeffs=turbine_coeffs_pr,  flow_ref=95.0, speed_ref=0.5),
+        eta_map=MapSurface(coeffs=turbine_coeffs_eta, flow_ref=95.0, speed_ref=0.5),
         mech_efficiency=0.99,
     )
 
@@ -784,12 +788,12 @@ def _build_default_cycle(variable_properties: bool = False) -> CycleModel:
     )
 
     compressor_design = DesignPoint(
-        corrected_flow=22.0, pressure_ratio=13.0, efficiency=0.88,
-        mass_flow=25.0, speed=1.0,
+        corrected_flow=430.0, pressure_ratio=24.0, efficiency=0.89,
+        mass_flow=430.0, speed=1.0,
     )
     turbine_design = DesignPoint(
-        corrected_flow=20.0, pressure_ratio=8.0, efficiency=0.92,
-        mass_flow=27.0, speed=1.0,
+        corrected_flow=95.0, pressure_ratio=6.0, efficiency=0.91,
+        mass_flow=440.0, speed=0.5,
     )
     model.set_design_point(compressor_design, turbine_design)
     return model
@@ -812,13 +816,14 @@ def _opt_physics_constrained(self,
     def objective(x: np.ndarray) -> float:
         return float(x[0])  # minimize mass flow
 
-    def eq_residuals(x: np.ndarray) -> np.ndarray:
+    def eq_residuals(x: np.ndarray) -> float:
         inner, ctrls = split(x)
         res, scales, _ = self._evaluate_cycle(inner, ctrls, params)
         idxs = [0, 1, 2, 3]            # shaft, comp_pr_err, turb_pr_err, nozzle_mass
         if enforce_specific_work:       # optional: hit target specific work exactly
             idxs.append(4)
-        return res[idxs] / scales[idxs]
+        normalized = res[idxs] / scales[idxs]
+        return float(np.linalg.norm(normalized))
 
     result = optimize.minimize(
         fun=objective,
@@ -843,44 +848,57 @@ setattr(CycleModel, "optimize_physics_constrained", _opt_physics_constrained)
 
 """## Example usage (root finding + optimization)"""
 
-# ==== RUNNER CELL: execute the physics-constrained optimization and print results ====
-# Sanity checks
-print("Has _build_default_cycle:", '_build_default_cycle' in globals())
-print("Has CycleModel.optimize_physics_constrained:", hasattr(CycleModel, 'optimize_physics_constrained'))
+if __name__ == "__main__":
+    # ==== RUNNER CELL: execute the physics-constrained optimization and print results ====
+    # Sanity checks
+    print("Has _build_default_cycle:", '_build_default_cycle' in globals())
+    print(
+        "Has CycleModel.optimize_physics_constrained:",
+        hasattr(CycleModel, "optimize_physics_constrained"),
+    )
 
-# Build model and parameters
-model = _build_default_cycle(variable_properties=True)
-params = CycleParameters(
-    compressor_speed=1.0,
-    turbine_speed=1.0,
-    load_watts=6_900_000.0,
-    nozzle_area=0.1,
-    target_specific_work=350_000.0,
-    ambient_Tt=288.15,
-    ambient_Pt=101_325.0,
-    burner_exit_Tt=1_800.0,
-    variable_properties=True,
-)
+    # Build model and parameters
+    model = _build_default_cycle(variable_properties=True)
+    params = CycleParameters(
+        compressor_speed=1.0,
+        turbine_speed=1.0,
+        load_watts=120_587_237.0,
+        nozzle_area=8.0,
+        target_specific_work=294_113.0,
+        ambient_Tt=288.15,
+        ambient_Pt=101_325.0,
+        burner_exit_Tt=1_650.0,
+        variable_properties=True,
+    )
 
-# Decision vector: [ mdot, PR_t, PRc_target, nozzle_area_scale, speed_scale ]
-decision_guess  = [20.5, 8.0, 12.0, 1.22, 1.0]
-decision_bounds = [
-    (5.0, 80.0),   # mdot
-    (1.5, 25.0),   # PR_t
-    (8.0, 16.0),   # PRc target
-    (0.5, 3.0),    # nozzle area scale
-    (0.5, 1.5),    # speed scale
-]
+    # Decision vector: [ mdot, PR_t, PRc_target, nozzle_area_scale, speed_scale ]
+    decision_guess = [420.0, 18.0, 20.0, 1.1, 1.2]
+    decision_bounds = [
+        (380.0, 480.0),  # mdot
+        (16.0, 20.0),    # PR_t
+        (18.0, 24.0),    # PRc target
+        (0.9, 1.3),      # nozzle area scale
+        (1.0, 1.3),      # speed scale
+    ]
 
-result = model.optimize_physics_constrained(
-    params, decision_guess, decision_bounds,
-    enforce_specific_work=False, maxiter=200
-)
+    result = model.optimize_physics_constrained(
+        params,
+        decision_guess,
+        decision_bounds,
+        enforce_specific_work=False,
+        maxiter=200,
+    )
 
-mdot, PR_t, PRc, A_scale, s_scale = result.x
-noz = result.diagnostics['nozzle']
+    mdot, PR_t, PRc, A_scale, s_scale = result.x
+    noz = result.diagnostics["nozzle"]
 
-print("\nSUCCESS?", result.success, "-", result.message)
-print(f"mdot={mdot:.3f} kg/s, PR_t={PR_t:.3f}, PRc={PRc:.3f}, A_scale={A_scale:.3f}, speed_scale={s_scale:.3f}")
-print(f"nozzle: choked={noz['choked']}, thrust={noz['thrust']:.1f} N, Ve={noz['Ve']:.1f} m/s")
-print("normalized residuals:", (result.residuals / result.residual_scales))
+    print("\nSUCCESS?", result.success, "-", result.message)
+    print(
+        f"mdot={mdot:.3f} kg/s, PR_t={PR_t:.3f}, PRc={PRc:.3f}, "
+        f"A_scale={A_scale:.3f}, speed_scale={s_scale:.3f}"
+    )
+    print(
+        f"nozzle: choked={noz['choked']}, thrust={noz['thrust']:.1f} N, "
+        f"Ve={noz['Ve']:.1f} m/s"
+    )
+    print("normalized residuals:", (result.residuals / result.residual_scales))
